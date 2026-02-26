@@ -1,0 +1,111 @@
+class WalletError(Exception):
+      pass
+      
+class InsufficientBalanceError(WalletError):
+      pass
+
+class AccountBlockedError(WalletError):
+      pass
+
+class User:
+      def __init__(self, username):
+          self.username = username
+          self._balance = 0
+          self._is_blocked = False
+
+      def deposit(self, amount):
+          if self._is_blocked:
+             raise AccountBlockedError("Akun di blokir")
+
+          self._balance += amount
+          return self._balance
+
+      def withdraw(self, amount):
+          if self._is_blocked:
+             raise AccountBlockedError("Akun di blokir")
+             
+          elif amount > self._balance:
+               raise InsufficientBalanceError("Balance tidak cukup")
+               
+          self._balance -= amount
+          return self._balance
+          
+      def get_balance(self):
+          return self._balance
+          
+      def block(self):
+          self._is_blocked = True
+          
+      def get_role(self):
+          return "Regular user"
+          
+class PremiumUser(User):
+      def deposit(self, amount):
+          hitung_bonus = amount * 0.05
+          total = amount + hitung_bonus
+          return super().deposit(total)
+          
+      def get_role(self):
+          return "Premium user"
+          
+class WalletManager:
+      def __init__(self):
+          self.users = {}
+          
+      def add_user(self, user):
+          self.users[user.username] = user
+          
+      def get_user(self, username):
+          return self.users.get(username)
+          
+      def block_user(self, username):
+          user = self.get_user(username)
+          
+          if not user:
+             raise WalletError("user not found") 
+             
+          user.block() 
+          
+      def deposit_user(self, username, amount):
+          user = self.get_user(username)
+         
+          if not user:
+             raise WalletError("user not found")
+
+          return user.deposit(amount)
+          
+      def withdraw_user(self, username, amount):
+          user = self.get_user(username)
+          
+          if not user:
+             raise WalletError("user not found")
+             
+               
+          return user.withdraw(amount)
+          
+def main():
+    manager = WalletManager()
+
+    manager.add_user(User("Monocrom"))
+    manager.add_user(PremiumUser("usn.dinda"))
+
+    try:
+        print("saldo setelah deposit: ", manager.deposit_user("Monocrom", 100000))
+        print("saldo setelah withdraw: ", manager.withdraw_user("Monocrom", 10000))
+        print("Premium deposit: ", manager.deposit_user("usn.dinda", 100000))
+
+    except InsufficientBalanceError as e:
+        print("saldo kurang:", e)
+
+    except AccountBlockedError as e:
+        print("Akun diblokir:", e)
+
+    except WalletError as e:
+        print("Wallet error:", e)
+
+    except Exception as e:
+        print("System error:", e)
+
+
+if __name__ == "__main__":
+    main()
